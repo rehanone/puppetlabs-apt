@@ -8,14 +8,14 @@ define apt::key (
     Optional[String] $options            = undef,
     ) {
 
-  validate_re($id, ['\A(0x)?[0-9a-fA-F]{8}\Z', '\A(0x)?[0-9a-fA-F]{16}\Z', '\A(0x)?[0-9a-fA-F]{40}\Z'])
+  validate_legacy("Pattern['\A(0x)?[0-9a-fA-F]{8}\Z', '\A(0x)?[0-9a-fA-F]{16}\Z', '\A(0x)?[0-9a-fA-F]{40}\Z']", "validate_re", $id, ['\A(0x)?[0-9a-fA-F]{8}\Z', '\A(0x)?[0-9a-fA-F]{16}\Z', '\A(0x)?[0-9a-fA-F]{40}\Z'])
 
   if $source {
-    validate_re($source, ['\Ahttps?:\/\/', '\Aftp:\/\/', '\A\/\w+'])
+    validate_legacy("Pattern['\Ahttps?:\/\/', '\Aftp:\/\/', '\A\/\w+']", "validate_re", $source, ['\Ahttps?:\/\/', '\Aftp:\/\/', '\A\/\w+'])
   }
 
   if $server {
-    validate_re($server,['\A((hkp|http|https):\/\/)?([a-z\d])([a-z\d-]{0,61}\.)+[a-z\d]+(:\d{2,5})?$'])
+    validate_legacy("Pattern['\A((hkp|http|https):\/\/)?([a-z\d])([a-z\d-]{0,61}\.)+[a-z\d]+(:\d{2,5})?$']", "validate_re", $server,['\A((hkp|http|https):\/\/)?([a-z\d])([a-z\d-]{0,61}\.)+[a-z\d]+(:\d{2,5})?$'])
   }
 
   case $ensure {

@@ -38,7 +38,7 @@ class apt (
   $frequency_options = ['always','daily','weekly','reluctantly']
 
   if $update['frequency'] {
-    validate_legacy("Enum['always','daily','weekly','reluctantly']", "validate_re", $update['frequency'], $frequency_options)
+    validate_legacy("Enum['always','daily','weekly','reluctantly']", 'validate_re', $update['frequency'], $frequency_options)
   }
   if $update['timeout'] {
     assert_type(Integer, $update['timeout'])
@@ -66,7 +66,7 @@ class apt (
   $_purge = merge($::apt::purge_defaults, $purge)
 
   if $proxy['ensure'] {
-    validate_legacy("Enum['file', 'present', 'absent']", "validate_re", $proxy['ensure'], ['file', 'present', 'absent'])
+    validate_legacy("Enum['file', 'present', 'absent']", 'validate_re', $proxy['ensure'], ['file', 'present', 'absent'])
   }
   if $proxy['host'] {
     assert_type(String, $proxy['host'])

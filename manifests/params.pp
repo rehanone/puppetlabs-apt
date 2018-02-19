@@ -1,3 +1,4 @@
+# Setting params for the module
 class apt::params {
 
   if $::osfamily != 'Debian' {
@@ -39,6 +40,7 @@ class apt::params {
 
   $update_defaults = {
     'frequency' => 'reluctantly',
+    'loglevel'  => undef,
     'timeout'   => undef,
     'tries'     => undef,
   }
@@ -48,6 +50,7 @@ class apt::params {
     'host'   => undef,
     'port'   => 8080,
     'https'  => false,
+    'direct' => false,
   }
 
   $purge_defaults = {
@@ -72,16 +75,9 @@ class apt::params {
   case $facts['os']['name']{
     'Debian': {
       case $facts['os']['release']['full'] {
-        '6.0': {
-          $backports = {
-            'location' => 'http://httpredir.debian.org/debian-backports',
-            'key'      => 'A1BD8E9D78F7FE5C3E65D8AF8B48AD6246925553',
-            'repos'    => 'main contrib non-free',
-          }
-        }
         default: {
           $backports = {
-            'location' => 'http://httpredir.debian.org/debian',
+            'location' => 'http://deb.debian.org/debian',
             'key'      => 'A1BD8E9D78F7FE5C3E65D8AF8B48AD6246925553',
             'repos'    => 'main contrib non-free',
           }
@@ -108,7 +104,7 @@ class apt::params {
           $ppa_options        = '-y'
           $ppa_package        = 'python-software-properties'
         }
-        '14.04', '14.10', '15.04', '15.10': {
+        '14.04', '14.10', '15.04', '15.10', '16.04': {
           $ppa_options        = '-y'
           $ppa_package        = 'software-properties-common'
         }

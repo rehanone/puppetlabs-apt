@@ -35,10 +35,11 @@ class apt (
     fail('This module only works on Debian or derivatives like Ubuntu')
   }
 
-  $frequency_options = ['always','daily','weekly','reluctantly']
-
   if $update['frequency'] {
-    validate_re($update['frequency'], $frequency_options)
+    assert_type(
+      Enum['always','daily','weekly','reluctantly'],
+      $update['frequency'],
+    )
   }
   if $update['timeout'] {
     assert_type(Integer, $update['timeout'])
@@ -66,7 +67,7 @@ class apt (
   $_purge = merge($::apt::purge_defaults, $purge)
 
   if $proxy['ensure'] {
-    validate_re($proxy['ensure'], ['file', 'present', 'absent'])
+    assert_type(Enum['file', 'present', 'absent'], $proxy['ensure'])
   }
   if $proxy['host'] {
     assert_type(String, $proxy['host'])
@@ -76,6 +77,9 @@ class apt (
   }
   if $proxy['https']{
     assert_type(Boolean, $proxy['https'])
+  }
+  if $proxy['direct']{
+    assert_type(Boolean, $proxy['direct'])
   }
 
   $_proxy = merge($apt::proxy_defaults, $proxy)
@@ -177,5 +181,20 @@ class apt (
   # manage pins if present
   if $pins {
     create_resources('apt::pin', $pins)
+  }
+
+  # required for adding GPG keys on Debian 9 (and derivatives)
+  case $facts['os']['name'] {
+    'Debian': {
+      if versioncmp($facts['os']['release']['major'], '9') >= 0 {
+        ensure_packages(['dirmngr'])
+      }
+    }
+    'Ubuntu': {
+      if versioncmp($facts['os']['release']['full'], '17.04') >= 0 {
+        ensure_packages(['dirmngr'])
+      }
+    }
+    default: { }
   }
 }

@@ -1,17 +1,17 @@
 # source.pp
 # add an apt source
 define apt::source(
-  Optional[String] $location           = undef,
-  String $comment                      = $name,
-  String $ensure                       = present,
-  Optional[String] $release            = undef,
-  String $repos                        = 'main',
-  Optional[Variant[Hash]] $include     = {},
-  Optional[Variant[String, Hash]] $key = undef,
-  $pin                                 = undef,
-  Optional[String] $architecture       = undef,
-  Boolean $allow_unsigned              = false,
-  Boolean $notify_update               = true,
+  Optional[String] $location                    = undef,
+  String $comment                               = $name,
+  String $ensure                                = present,
+  Optional[String] $release                     = undef,
+  String $repos                                 = 'main',
+  Optional[Variant[Hash]] $include              = {},
+  Optional[Variant[String, Hash]] $key          = undef,
+  Optional[Variant[Hash, Numeric, String]] $pin = undef,
+  Optional[String] $architecture                = undef,
+  Boolean $allow_unsigned                       = false,
+  Boolean $notify_update                        = true,
 ) {
 
   # This is needed for compat with 1.8.x
@@ -29,21 +29,30 @@ define apt::source(
     $_release = $release
   }
 
-  if $ensure == 'present' and ! $location {
-    fail('cannot create a source entry without specifying a location')
+  # Some releases do not support https transport with default installation
+  $_transport_https_releases = [ 'wheezy', 'jessie', 'stretch', 'trusty', 'xenial' ]
+
+  if $ensure == 'present' {
+    if ! $location {
+      fail('cannot create a source entry without specifying a location')
+    } elsif $_release in $_transport_https_releases {
+      $method = split($location, '[:\/]+')[0]
+      if $method == 'https' {
+        ensure_packages('apt-transport-https')
+      }
+    }
   }
 
   $includes = merge($::apt::include_defaults, $include)
 
   if $key {
-    if is_hash($key) {
+    if $key =~ Hash {
       unless $key['id'] {
         fail('key hash must contain at least an id entry')
       }
       $_key = merge($::apt::source_key_defaults, $key)
     } else {
-      validate_legacy(String, 'validate_string', $key)
-      $_key = { 'id' => $key }
+      $_key = { 'id' => assert_type(String[1], $key) }
     }
   }
 
@@ -66,9 +75,9 @@ define apt::source(
   }
 
   if $pin {
-    if is_hash($pin) {
+    if $pin =~ Hash {
       $_pin = merge($pin, { 'ensure' => $ensure, 'before' => $_before })
-    } elsif (is_numeric($pin) or is_string($pin)) {
+    } elsif ($pin =~ Numeric or $pin =~ String) {
       $url_split = split($location, '[:\/]+')
       $host      = $url_split[1]
       $_pin = {
@@ -85,7 +94,7 @@ define apt::source(
 
   # We do not want to remove keys when the source is absent.
   if $key and ($ensure == 'present') {
-    if is_hash($_key) {
+    if $_key =~ Hash {
       apt::key { "Add key: ${$_key['id']} from Apt::Source ${title}":
         ensure  => present,
         id      => $_key['id'],

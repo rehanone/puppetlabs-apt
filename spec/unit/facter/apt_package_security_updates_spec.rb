@@ -1,7 +1,7 @@
 require 'spec_helper'
 
-describe 'apt_security_updates fact' do
-  subject { Facter.fact(:apt_security_updates).value }
+describe 'apt_package_security_updates fact' do
+  subject { Facter.fact(:apt_package_security_updates).value }
 
   after(:each) { Facter.clear }
 
@@ -12,7 +12,7 @@ describe 'apt_security_updates fact' do
     it { is_expected.to be nil }
   end
 
-  describe 'when apt has security updates' do
+  describe 'when apt has updates' do
     before(:each) do
       Facter.fact(:osfamily).stubs(:value).returns 'Debian'
       File.stubs(:executable?) # Stub all other calls
@@ -31,7 +31,11 @@ describe 'apt_security_updates fact' do
           "Conf curl (7.52.1-5+deb9u2 Debian-Security:9/stable [amd64])\n" \
       end
 
-      it { is_expected.to eq(1) }
+      if Facter.version < '2.0.0'
+        it { is_expected.to eq('curl') }
+      else
+        it { is_expected.to eq(['curl']) }
+      end
     end
 
     describe 'on Ubuntu' do
@@ -44,7 +48,11 @@ describe 'apt_security_updates fact' do
           "Conf procps (2:3.3.10-4ubuntu2.3 Ubuntu:16.04/xenial-updates [amd64])\n"
       end
 
-      it { is_expected.to eq(2) }
+      if Facter.version < '2.0.0'
+        it { is_expected.to eq('tzdata,curl') }
+      else
+        it { is_expected.to eq(%w[tzdata curl]) }
+      end
     end
   end
 end
